@@ -1,0 +1,29 @@
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Python virtual environments
+.venv/
+venv/
+
+# Environment variables and secrets
+.env
+.env.*
+
+# Temporary files and logs
+*.log
+*.tmp
+
+# IDE and operating system files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# OpenPLC build artifacts
+*.o
+*.obj
+
+# OpenPLC generated build files
+OpenPLC/build/

@@ -1,0 +1,12 @@
+{
+  "name": "Reactor_Modbus_Server",
+  "protocol": "modbus-tcp",
+  "modbusSlaveConfig": {
+    "enabled": true,
+    "transports": [
+      "tcp"
+    ],
+    "networkInterface": "127.0.0.1",
+    "port": 502
+  }
+}
