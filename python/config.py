@@ -23,3 +23,16 @@ COOLING_COIL = 0
 ALARM_COIL = 1
 
 
+# ==========================================
+# SENSOR-COMPROMISE EXPERIMENT
+# ==========================================
+
+SENSOR_ATTACK_ENABLED = True
+COMPROMISED_SENSOR_ID = 3
+FALSE_TEMPERATURE = 100.0  # Celsius; held constant from simulation startup
+
+# Startup readiness applies before simulated time begins.
+PLC_STARTUP_TIMEOUT = 60.0  # Maximum real seconds to wait for communication
+PLC_STARTUP_MAX_AGE = 2.0   # Each sensor poll and actuator write must be recent
+
+
