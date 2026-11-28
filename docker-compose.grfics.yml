@@ -1,0 +1,27 @@
+services:
+  plc-proxy:
+    image: alpine/socat
+    container_name: plc-proxy
+    network_mode: host
+    command: TCP-LISTEN:502,bind=172.17.0.1,fork,reuseaddr TCP:127.0.0.1:502
+    restart: unless-stopped
+
+  reactor-sim:
+    image: python:3.11-slim
+    container_name: reactor-sim
+    working_dir: /app
+    volumes:
+      - ./python:/app
+    command: bash -c "pip install -q pymodbus && tail -f /dev/null"
+    networks:
+      - default
+      - grfics_net
+    depends_on:
+      - plc-proxy
+
+networks:
+  default:
+    driver: bridge
+  grfics_net:
+    external: true
+    name: grficsv3_b-ics-net

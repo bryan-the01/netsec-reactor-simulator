@@ -82,3 +82,32 @@ class PLCModule:
 
     def close(self):
         self.client.close()
+
+class GRFICSVisualizerBridge:
+    def __init__(self, ip, port, pressure_reg, valve_reg):
+        self.valve_reg = valve_reg  # Address 1 (confirmed in modbusdevice.py)
+        # Feed 2 (192.168.95.11) = Cooling flow into reactor
+        self.cooling_client = ModbusTcpClient(ip, port=port)
+        # Purge (192.168.95.12) = Heat/steam relief proportional to reactor temp
+        self.purge_client = ModbusTcpClient("192.168.95.12", port=port)
+
+    def connect(self):
+        if not self.cooling_client.connect():
+            raise ConnectionError("Could not connect to GRFICSv3 Feed 2 (192.168.95.11)")
+        if not self.purge_client.connect():
+            raise ConnectionError("Could not connect to GRFICSv3 Purge (192.168.95.12)")
+
+    def sync_reactor_state(self, temperature_c, cooling_active):
+        # GRFICSv3 computes (value / 65535.0) * 100.0 from Holding Register 1
+        cooling_sp = 65535 if cooling_active else 0
+
+        # Scale reactor temperature (50°C to 110°C) into 0-65535 for the purge valve
+        temp_ratio = max(0.0, min(1.0, (temperature_c - 50.0) / 60.0))
+        purge_sp = int(temp_ratio * 65535)
+
+        self.cooling_client.write_register(address=self.valve_reg, value=cooling_sp, device_id=1)
+        self.purge_client.write_register(address=self.valve_reg, value=purge_sp, device_id=1)
+
+    def close(self):
+        self.cooling_client.close()
+        self.purge_client.close()

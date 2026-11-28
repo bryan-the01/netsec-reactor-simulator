@@ -7,19 +7,28 @@ import sensor, plc_module, reactor, config, data_logger
 # ==========================================
 
 plant = reactor.Reactor(
-    initial_temperature = config.temperature
+    initial_temperature=config.temperature
 )
 
 temperature_sensor = sensor.TemperatureSensor(plant)
 
 plc = plc_module.PLCModule(
-    ip = config.PLC_IP,
-    port = config.PLC_PORT,
-    device_id = config.DEVICE_ID,
-    temperature_register = config.TEMPERATURE_REGISTER,
-    cooling_coil = config.COOLING_COIL,
-    alarm_coil = config.ALARM_COIL
+    ip=config.PLC_IP,
+    port=config.PLC_PORT,
+    device_id=config.DEVICE_ID,
+    temperature_register=config.TEMPERATURE_REGISTER,
+    cooling_coil=config.COOLING_COIL,
+    alarm_coil=config.ALARM_COIL
 )
+
+visualizer = None
+if getattr(config, "GRFICS_ENABLED", False):
+    visualizer = plc_module.GRFICSVisualizerBridge(
+        ip=config.GRFICS_SIM_IP,
+        port=config.GRFICS_SIM_PORT,
+        pressure_reg=config.GRFICS_PRESSURE_REG,
+        valve_reg=config.GRFICS_COOLING_VALVE_REG
+    )
 
 cooling_active = config.cooling_active
 high_temp_alarm = config.high_temp_alarm
@@ -39,6 +48,9 @@ logger = None
 
 try:
     plc.connect()
+    if visualizer is not None:
+        visualizer.connect()
+
     logger = data_logger.create_log()
 
     for step in range(simulation_duration):
@@ -62,7 +74,11 @@ try:
         # Step 6–7: Calculate heating/cooling and update the reactor
         plant.update(cooling_active, delta_time)
 
-        # Step 8: Display simulation results
+        # Step 8: Push updated reactor state to the GRFICSv3 3D visualizer
+        if visualizer is not None:
+            visualizer.sync_reactor_state(plant.temperature, cooling_active)
+
+        # Step 9: Display simulation results
         elapsed_time = (step + 1) * delta_time
         cooling_status = "ON" if cooling_active else "OFF"
         alarm_status = "ON" if high_temp_alarm else "OFF"
@@ -85,15 +101,19 @@ try:
             plant.temperature
         )
 
-        # Step 9: Wait until next simulation step
+        # Step 10: Wait until next simulation step
         time.sleep(delta_time)
 
 finally:
     try:
         plc.close()
     finally:
-        if logger is not None:
-            data_logger.close_log(logger)
+        try:
+            if visualizer is not None:
+                visualizer.close()
+        finally:
+            if logger is not None:
+                data_logger.close_log(logger)
 
 
 print("\nSimulation complete.")

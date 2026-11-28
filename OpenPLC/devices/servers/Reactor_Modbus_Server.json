@@ -7,6 +7,14 @@
       "tcp"
     ],
     "networkInterface": "127.0.0.1",
-    "port": 502
+    "port": 502,
+    "bufferMapping": {
+      "holdingRegisters": {
+        "mwCount": 10
+      },
+      "coils": {
+        "qxBits": 8
+      }
+    }
   }
 }
